@@ -1,0 +1,1787 @@
+{
+  "datasets": [
+    {
+      "catalog": "bootcamp_dev",
+      "displayName": "Fact Orders",
+      "name": "fact_orders",
+      "queryLines": [
+        "SELECT\n",
+        "  *\n",
+        "FROM\n",
+        "  fact_orders"
+      ],
+      "schema": "dev_zdenek_strbik_sales"
+    },
+    {
+      "asset_name": "bootcamp_dev.dev_zdenek_strbik_sales.orders_metrics",
+      "displayName": "Orders Metrics",
+      "name": "orders_metrics"
+    },
+    {
+      "config": {
+        "comment": "Customer churn risk analysis",
+        "dimensions": [
+          {
+            "displayName": "Churn Status",
+            "expr": "CASE WHEN churn_predicted = 1 THEN 'At Risk' ELSE 'Retained' END",
+            "name": "churn_status"
+          },
+          {
+            "expr": "segment",
+            "name": "segment"
+          },
+          {
+            "expr": "region",
+            "name": "region"
+          }
+        ],
+        "measures": [
+          {
+            "displayName": "Customers",
+            "expr": "COUNT(DISTINCT customer_id)",
+            "name": "customer_count"
+          },
+          {
+            "displayName": "At-Risk Customers",
+            "expr": "COUNT(DISTINCT CASE WHEN churn_predicted = 1 THEN customer_id END)",
+            "name": "at_risk_count"
+          },
+          {
+            "displayName": "Churn Rate",
+            "expr": "COUNT(DISTINCT CASE WHEN churn_predicted = 1 THEN customer_id END) * 1.0 / COUNT(DISTINCT customer_id)",
+            "format": {
+              "decimalPlaces": {
+                "places": 1,
+                "type": "exact"
+              },
+              "type": "percentage"
+            },
+            "name": "churn_rate"
+          },
+          {
+            "displayName": "Revenue at Risk",
+            "expr": "SUM(CASE WHEN churn_predicted = 1 THEN amount ELSE 0 END)",
+            "format": {
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "places": 0,
+                "type": "exact"
+              },
+              "type": "currency"
+            },
+            "name": "revenue_at_risk"
+          }
+        ],
+        "source": "SELECT cp.customer_id, cp.churn_predicted, oe.segment, oe.region, oe.amount, oe.order_id FROM bootcamp_dev.dev_zdenek_strbik_sales.churn_predictions cp LEFT JOIN bootcamp_dev.dev_zdenek_strbik_sales.orders_enriched oe ON cp.customer_id = oe.customer_id\n",
+        "version": "1.1"
+      },
+      "displayName": "Churn Predictions",
+      "name": "churn"
+    },
+    {
+      "config": {
+        "comment": "Product performance metrics",
+        "dimensions": [
+          {
+            "displayName": "Product",
+            "expr": "product_name",
+            "name": "product_name"
+          },
+          {
+            "expr": "category",
+            "name": "category"
+          },
+          {
+            "expr": "region",
+            "name": "region"
+          },
+          {
+            "expr": "channel",
+            "name": "channel"
+          }
+        ],
+        "measures": [
+          {
+            "displayName": "Revenue",
+            "expr": "SUM(amount)",
+            "format": {
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "places": 0,
+                "type": "exact"
+              },
+              "type": "currency"
+            },
+            "name": "revenue"
+          },
+          {
+            "displayName": "Orders",
+            "expr": "COUNT(DISTINCT order_id)",
+            "name": "order_count"
+          },
+          {
+            "displayName": "Units Sold",
+            "expr": "SUM(quantity)",
+            "name": "units_sold"
+          },
+          {
+            "displayName": "Avg Selling Price",
+            "expr": "SUM(amount) / SUM(quantity)",
+            "format": {
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "places": 2,
+                "type": "exact"
+              },
+              "type": "currency"
+            },
+            "name": "avg_selling_price"
+          }
+        ],
+        "source": "SELECT o.product_id, p.name AS product_name, p.category, p.list_price,\n       o.amount, o.quantity, o.order_id, o.region, o.channel\nFROM bootcamp_dev.dev_zdenek_strbik_sales.orders_enriched o JOIN bootcamp_dev.dev_zdenek_strbik_sales.products p ON o.product_id = p.product_id\n",
+        "version": "1.1"
+      },
+      "displayName": "Top Products",
+      "name": "top_products"
+    },
+    {
+      "config": {
+        "comment": "Detailed order-level metrics for deep-dive analysis",
+        "dimensions": [
+          {
+            "displayName": "Order Date",
+            "expr": "order_date",
+            "format": {
+              "dateFormat": "year_month_day",
+              "type": "date"
+            },
+            "name": "order_date"
+          },
+          {
+            "displayName": "Order Week",
+            "expr": "DATE_TRUNC('WEEK', order_date)",
+            "format": {
+              "dateFormat": "year_month_day",
+              "type": "date"
+            },
+            "name": "order_week"
+          },
+          {
+            "displayName": "Order Month",
+            "expr": "DATE_TRUNC('MONTH', order_date)",
+            "format": {
+              "dateFormat": "locale_short_month",
+              "type": "date"
+            },
+            "name": "order_month"
+          },
+          {
+            "expr": "region",
+            "name": "region"
+          },
+          {
+            "expr": "segment",
+            "name": "segment"
+          },
+          {
+            "expr": "category",
+            "name": "category"
+          },
+          {
+            "expr": "channel",
+            "name": "channel"
+          },
+          {
+            "expr": "coupon_code",
+            "name": "coupon_code"
+          },
+          {
+            "displayName": "Coupon Usage",
+            "expr": "CASE WHEN coupon_code IS NOT NULL AND coupon_code != '' THEN 'With Coupon' ELSE 'No Coupon' END",
+            "name": "has_coupon"
+          }
+        ],
+        "measures": [
+          {
+            "displayName": "Revenue",
+            "expr": "SUM(amount)",
+            "format": {
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "places": 0,
+                "type": "exact"
+              },
+              "type": "currency"
+            },
+            "name": "revenue"
+          },
+          {
+            "displayName": "Orders",
+            "expr": "COUNT(DISTINCT order_id)",
+            "name": "order_count"
+          },
+          {
+            "displayName": "Units Sold",
+            "expr": "SUM(quantity)",
+            "name": "units_sold"
+          },
+          {
+            "displayName": "Avg Order Value",
+            "expr": "SUM(amount) / COUNT(DISTINCT order_id)",
+            "format": {
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "places": 2,
+                "type": "exact"
+              },
+              "type": "currency"
+            },
+            "name": "avg_order_value"
+          },
+          {
+            "displayName": "Avg Unit Price",
+            "expr": "SUM(amount) / SUM(quantity)",
+            "format": {
+              "currencyCode": "USD",
+              "decimalPlaces": {
+                "places": 2,
+                "type": "exact"
+              },
+              "type": "currency"
+            },
+            "name": "avg_unit_price"
+          },
+          {
+            "displayName": "Coupon Usage Rate",
+            "expr": "COUNT(DISTINCT CASE WHEN coupon_code IS NOT NULL AND coupon_code != '' THEN order_id END) * 1.0 / COUNT(DISTINCT order_id)",
+            "format": {
+              "decimalPlaces": {
+                "places": 1,
+                "type": "exact"
+              },
+              "type": "percentage"
+            },
+            "name": "coupon_order_rate"
+          }
+        ],
+        "source": "bootcamp_dev.dev_zdenek_strbik_sales.orders_enriched",
+        "version": "1.1"
+      },
+      "displayName": "Sales Detail",
+      "name": "sales_detail"
+    }
+  ],
+  "pages": [
+    {
+      "displayName": "Overview",
+      "layout": [
+        {
+          "position": {
+            "height": 1,
+            "width": 6,
+            "x": 6,
+            "y": 0
+          },
+          "widget": {
+            "name": "channel_filter",
+            "queries": [
+              {
+                "name": "dashboards/01f1c3e12bde134b853e122e1286e2be/datasets/01f1c3e177c8114d826b0b01a4d37991_channel",
+                "query": {
+                  "datasetName": "orders_metrics",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`channel`",
+                      "name": "channel"
+                    },
+                    {
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)",
+                      "name": "channel_associativity"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "channel",
+                    "queryName": "dashboards/01f1c3e12bde134b853e122e1286e2be/datasets/01f1c3e177c8114d826b0b01a4d37991_channel"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Channel"
+              },
+              "version": 2,
+              "widgetType": "filter-multi-select"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 6,
+            "x": 0,
+            "y": 7
+          },
+          "widget": {
+            "name": "revenue_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_metrics",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`order_month`",
+                      "name": "order_month"
+                    },
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "color": {
+                  "displayName": "order_month",
+                  "fieldName": "order_month",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "x": {
+                  "displayName": "order_month",
+                  "fieldName": "order_month",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "displayName": "revenue",
+                  "fieldName": "measure(revenue)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Revenue Trend by Month"
+              },
+              "version": 3,
+              "widgetType": "line"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 6,
+            "x": 6,
+            "y": 7
+          },
+          "widget": {
+            "name": "revenue_by_region",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_metrics",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`region`",
+                      "name": "region"
+                    },
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "color": {
+                  "displayName": "region",
+                  "fieldName": "region",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "x": {
+                  "displayName": "region",
+                  "fieldName": "region",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "displayName": "revenue",
+                  "fieldName": "measure(revenue)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Revenue by Region"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 6,
+            "x": 0,
+            "y": 12
+          },
+          "widget": {
+            "name": "aov_by_segment",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_metrics",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`segment`",
+                      "name": "segment"
+                    },
+                    {
+                      "expression": "MEASURE(`avg_order_value`)",
+                      "name": "measure(avg_order_value)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "color": {
+                  "displayName": "segment",
+                  "fieldName": "segment",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "x": {
+                  "displayName": "segment",
+                  "fieldName": "segment",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "displayName": "avg_order_value",
+                  "fieldName": "measure(avg_order_value)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Avg Order Value by Segment"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 1,
+            "width": 6,
+            "x": 0,
+            "y": 0
+          },
+          "widget": {
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Orders Analytics\n",
+                "Key performance indicators and revenue insights"
+              ]
+            },
+            "name": "header"
+          }
+        },
+        {
+          "position": {
+            "height": 3,
+            "width": 4,
+            "x": 0,
+            "y": 1
+          },
+          "widget": {
+            "name": "total_revenue",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_metrics",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(revenue)",
+                  "rowNumber": 0
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total Revenue"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 3,
+            "width": 4,
+            "x": 4,
+            "y": 1
+          },
+          "widget": {
+            "name": "total_orders",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_metrics",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`order_count`)",
+                      "name": "measure(order_count)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(order_count)",
+                  "rowNumber": 0
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total Orders"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 3,
+            "width": 4,
+            "x": 8,
+            "y": 1
+          },
+          "widget": {
+            "name": "avg_order_val",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_metrics",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`avg_order_value`)",
+                      "name": "measure(avg_order_value)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(avg_order_value)",
+                  "rowNumber": 0
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Avg Order Value"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 6,
+            "x": 6,
+            "y": 12
+          },
+          "widget": {
+            "name": "revenue_by_category",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "orders_metrics",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    },
+                    {
+                      "expression": "`category`",
+                      "name": "category"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "angle": {
+                  "displayName": "revenue",
+                  "fieldName": "measure(revenue)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "displayName": "category",
+                  "fieldName": "category",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Revenue by Category"
+              },
+              "version": 3,
+              "widgetType": "pie"
+            }
+          }
+        }
+      ],
+      "layoutVersion": "GRID_V1",
+      "name": "25507535",
+      "pageType": "PAGE_TYPE_CANVAS"
+    },
+    {
+      "displayName": "Sales Deep Dive",
+      "layout": [
+        {
+          "position": {
+            "height": 1,
+            "width": 12,
+            "x": 0,
+            "y": 0
+          },
+          "widget": {
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Sales Deep Dive\n",
+                "Granular revenue analysis across dimensions"
+              ]
+            },
+            "name": "header"
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 8,
+            "x": 0,
+            "y": 1
+          },
+          "widget": {
+            "name": "weekly_trend",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "sales_detail",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "DATE_TRUNC(\"WEEK\", `order_week`)",
+                      "name": "weekly(order_week)"
+                    },
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "x": {
+                  "displayName": "Week",
+                  "fieldName": "weekly(order_week)",
+                  "scale": {
+                    "type": "temporal"
+                  }
+                },
+                "y": {
+                  "displayName": "revenue",
+                  "fieldName": "measure(revenue)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Weekly Revenue Trend"
+              },
+              "version": 3,
+              "widgetType": "line"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 4,
+            "x": 8,
+            "y": 1
+          },
+          "widget": {
+            "name": "channel_pie",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "sales_detail",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    },
+                    {
+                      "expression": "`channel`",
+                      "name": "channel"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "angle": {
+                  "displayName": "revenue",
+                  "fieldName": "measure(revenue)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "displayName": "channel",
+                  "fieldName": "channel",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Revenue by Channel"
+              },
+              "version": 3,
+              "widgetType": "pie"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 6,
+            "x": 0,
+            "y": 6
+          },
+          "widget": {
+            "name": "region_category_pivot",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "cubeGroupingSets": {
+                    "sets": [
+                      {
+                        "fieldNames": [
+                          "region"
+                        ]
+                      },
+                      {
+                        "fieldNames": [
+                          "category"
+                        ]
+                      }
+                    ]
+                  },
+                  "datasetName": "sales_detail",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`region`",
+                      "name": "region"
+                    },
+                    {
+                      "expression": "`category`",
+                      "name": "category"
+                    },
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    }
+                  ],
+                  "orders": [
+                    {
+                      "direction": "ASC",
+                      "expression": "`region`"
+                    },
+                    {
+                      "direction": "ASC",
+                      "expression": "`category`"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "cell": {
+                  "cellType": "text",
+                  "fieldName": "measure(revenue)",
+                  "type": "single-cell"
+                },
+                "columns": [
+                  {
+                    "fieldName": "category"
+                  }
+                ],
+                "rows": [
+                  {
+                    "fieldName": "region"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Revenue by Region × Category"
+              },
+              "version": 3,
+              "widgetType": "pivot"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 6,
+            "x": 6,
+            "y": 6
+          },
+          "widget": {
+            "name": "segment_channel_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "sales_detail",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`channel`",
+                      "name": "channel"
+                    },
+                    {
+                      "expression": "`segment`",
+                      "name": "segment"
+                    },
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "color": {
+                  "displayName": "channel",
+                  "fieldName": "channel",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "x": {
+                  "displayName": "segment",
+                  "fieldName": "segment",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "displayName": "revenue",
+                  "fieldName": "measure(revenue)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Revenue by Segment & Channel"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 6,
+            "width": 12,
+            "x": 0,
+            "y": 11
+          },
+          "widget": {
+            "name": "top_products_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "top_products",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`product_name`",
+                      "name": "product_name"
+                    },
+                    {
+                      "expression": "`category`",
+                      "name": "category"
+                    },
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    },
+                    {
+                      "expression": "MEASURE(`order_count`)",
+                      "name": "measure(order_count)"
+                    },
+                    {
+                      "expression": "MEASURE(`units_sold`)",
+                      "name": "measure(units_sold)"
+                    },
+                    {
+                      "expression": "MEASURE(`avg_selling_price`)",
+                      "name": "measure(avg_selling_price)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "product_name"
+                  },
+                  {
+                    "fieldName": "category"
+                  },
+                  {
+                    "fieldName": "measure(revenue)"
+                  },
+                  {
+                    "fieldName": "measure(order_count)"
+                  },
+                  {
+                    "fieldName": "measure(units_sold)"
+                  },
+                  {
+                    "fieldName": "measure(avg_selling_price)"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Top Products by Revenue"
+              },
+              "version": 2,
+              "widgetType": "table"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 4,
+            "x": 0,
+            "y": 17
+          },
+          "widget": {
+            "name": "coupon_bar",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "sales_detail",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`has_coupon`",
+                      "name": "has_coupon"
+                    },
+                    {
+                      "expression": "MEASURE(`revenue`)",
+                      "name": "measure(revenue)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "color": {
+                  "displayName": "has_coupon",
+                  "fieldName": "has_coupon",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "x": {
+                  "displayName": "has_coupon",
+                  "fieldName": "has_coupon",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "displayName": "revenue",
+                  "fieldName": "measure(revenue)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Coupon vs Non-Coupon Revenue"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 3,
+            "width": 4,
+            "x": 4,
+            "y": 17
+          },
+          "widget": {
+            "name": "units_counter",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "sales_detail",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`units_sold`)",
+                      "name": "measure(units_sold)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(units_sold)",
+                  "rowNumber": 0
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Units Sold"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 3,
+            "width": 4,
+            "x": 8,
+            "y": 17
+          },
+          "widget": {
+            "name": "coupon_rate_counter",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "sales_detail",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`coupon_order_rate`)",
+                      "name": "measure(coupon_order_rate)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(coupon_order_rate)",
+                  "rowNumber": 0
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Coupon Usage Rate"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        }
+      ],
+      "layoutVersion": "GRID_V1",
+      "name": "sales_deep_dive",
+      "pageType": "PAGE_TYPE_CANVAS"
+    },
+    {
+      "displayName": "Customer Intelligence",
+      "layout": [
+        {
+          "position": {
+            "height": 1,
+            "width": 12,
+            "x": 0,
+            "y": 0
+          },
+          "widget": {
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Customer Intelligence\n",
+                "Churn risk analysis and support insights"
+              ]
+            },
+            "name": "header"
+          }
+        },
+        {
+          "position": {
+            "height": 3,
+            "width": 3,
+            "x": 0,
+            "y": 1
+          },
+          "widget": {
+            "name": "total_customers",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "churn",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`customer_count`)",
+                      "name": "measure(customer_count)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(customer_count)",
+                  "rowNumber": 0
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Total Customers"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 3,
+            "width": 3,
+            "x": 3,
+            "y": 1
+          },
+          "widget": {
+            "name": "at_risk",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "churn",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`at_risk_count`)",
+                      "name": "measure(at_risk_count)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(at_risk_count)",
+                  "rowNumber": 0
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "At-Risk Customers"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 3,
+            "width": 3,
+            "x": 6,
+            "y": 1
+          },
+          "widget": {
+            "name": "churn_rate",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "churn",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`churn_rate`)",
+                      "name": "measure(churn_rate)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(churn_rate)",
+                  "rowNumber": 0
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Churn Rate"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 3,
+            "width": 3,
+            "x": 9,
+            "y": 1
+          },
+          "widget": {
+            "name": "revenue_at_risk",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "churn",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`revenue_at_risk`)",
+                      "name": "measure(revenue_at_risk)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "value": {
+                  "fieldName": "measure(revenue_at_risk)",
+                  "rowNumber": 0
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Revenue at Risk"
+              },
+              "version": 2,
+              "widgetType": "counter"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 6,
+            "x": 0,
+            "y": 4
+          },
+          "widget": {
+            "name": "churn_by_segment",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "churn",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`churn_status`",
+                      "name": "churn_status"
+                    },
+                    {
+                      "expression": "`segment`",
+                      "name": "segment"
+                    },
+                    {
+                      "expression": "MEASURE(`at_risk_count`)",
+                      "name": "measure(at_risk_count)"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "color": {
+                  "displayName": "churn_status",
+                  "fieldName": "churn_status",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "x": {
+                  "displayName": "segment",
+                  "fieldName": "segment",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                },
+                "y": {
+                  "displayName": "at_risk_count",
+                  "fieldName": "measure(at_risk_count)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Churn Risk by Segment"
+              },
+              "version": 3,
+              "widgetType": "bar"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 6,
+            "x": 6,
+            "y": 4
+          },
+          "widget": {
+            "name": "churn_pie",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "churn",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "MEASURE(`customer_count`)",
+                      "name": "measure(customer_count)"
+                    },
+                    {
+                      "expression": "`churn_status`",
+                      "name": "churn_status"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "angle": {
+                  "displayName": "customer_count",
+                  "fieldName": "measure(customer_count)",
+                  "scale": {
+                    "type": "quantitative"
+                  }
+                },
+                "color": {
+                  "displayName": "churn_status",
+                  "fieldName": "churn_status",
+                  "scale": {
+                    "type": "categorical"
+                  }
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Customer Distribution"
+              },
+              "version": 3,
+              "widgetType": "pie"
+            }
+          }
+        },
+        {
+          "position": {
+            "height": 5,
+            "width": 4,
+            "x": 8,
+            "y": 14
+          },
+          "widget": {
+            "name": "churn_region_pivot",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "cubeGroupingSets": {
+                    "sets": [
+                      {
+                        "fieldNames": [
+                          "region"
+                        ]
+                      },
+                      {
+                        "fieldNames": [
+                          "churn_status"
+                        ]
+                      }
+                    ]
+                  },
+                  "datasetName": "churn",
+                  "disaggregated": false,
+                  "fields": [
+                    {
+                      "expression": "`region`",
+                      "name": "region"
+                    },
+                    {
+                      "expression": "`churn_status`",
+                      "name": "churn_status"
+                    },
+                    {
+                      "expression": "MEASURE(`customer_count`)",
+                      "name": "measure(customer_count)"
+                    }
+                  ],
+                  "orders": [
+                    {
+                      "direction": "ASC",
+                      "expression": "`region`"
+                    },
+                    {
+                      "direction": "ASC",
+                      "expression": "`churn_status`"
+                    }
+                  ]
+                }
+              }
+            ],
+            "spec": {
+              "data": {
+                "queryName": "main_query"
+              },
+              "encodings": {
+                "cell": {
+                  "cellType": "text",
+                  "fieldName": "measure(customer_count)",
+                  "type": "single-cell"
+                },
+                "columns": [
+                  {
+                    "fieldName": "churn_status"
+                  }
+                ],
+                "rows": [
+                  {
+                    "fieldName": "region"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Churn Risk by Region"
+              },
+              "version": 3,
+              "widgetType": "pivot"
+            }
+          }
+        }
+      ],
+      "layoutVersion": "GRID_V1",
+      "name": "customer_intel",
+      "pageType": "PAGE_TYPE_CANVAS"
+    }
+  ],
+  "uiSettings": {
+    "applyModeEnabled": false,
+    "theme": {
+      "canvasBackgroundColor": {
+        "dark": "#0D1117",
+        "light": "#EBEBEB"
+      },
+      "fontSettings": {
+        "base": {
+          "fontColor": {
+            "dark": "#E0E0E0",
+            "light": "#1A1A2E"
+          },
+          "fontFamily": "DM Sans"
+        },
+        "fieldValue": {
+          "fontFamily": "DM Sans",
+          "fontSize": 12
+        },
+        "widgetTitle": {
+          "fontFamily": "DM Sans",
+          "fontSize": 16,
+          "fontWeight": 700
+        }
+      },
+      "selectionColor": {
+        "dark": "#15AFDD",
+        "light": "#2272B4"
+      },
+      "visualizationColorMappings": [
+        {
+          "color": "#15AFDD",
+          "value": "NA"
+        },
+        {
+          "color": "#2375A8",
+          "value": "EMEA"
+        },
+        {
+          "color": "#52A870",
+          "value": "APAC"
+        },
+        {
+          "color": "#C85070",
+          "value": "LATAM"
+        },
+        {
+          "color": "#15AFDD",
+          "value": "consumer"
+        },
+        {
+          "color": "#C89930",
+          "value": "smb"
+        },
+        {
+          "color": "#7B61FF",
+          "value": "enterprise"
+        },
+        {
+          "color": "#E74C3C",
+          "value": "At Risk"
+        },
+        {
+          "color": "#52A870",
+          "value": "Retained"
+        },
+        {
+          "color": "#FF6B35",
+          "value": "With Coupon"
+        },
+        {
+          "color": "#2EC4B6",
+          "value": "No Coupon"
+        },
+        {
+          "color": "#15AFDD",
+          "value": "online"
+        },
+        {
+          "color": "#C89930",
+          "value": "in-store"
+        },
+        {
+          "color": "#7B61FF",
+          "value": "partner"
+        },
+        {
+          "color": "#15AFDD",
+          "value": "laptops"
+        },
+        {
+          "color": "#2375A8",
+          "value": "phones"
+        },
+        {
+          "color": "#52A870",
+          "value": "services"
+        },
+        {
+          "color": "#C85070",
+          "value": "software"
+        },
+        {
+          "color": "#C89930",
+          "value": "accessories"
+        }
+      ],
+      "visualizationColors": [
+        "#15AFDD",
+        "#2375A8",
+        "#52A870",
+        "#C85070",
+        "#C89930",
+        "#7B61FF",
+        "#FF6B35",
+        "#2EC4B6"
+      ],
+      "widgetBackgroundColor": {
+        "dark": "#161B22",
+        "light": "#FCFCFD"
+      },
+      "widgetBorderColor": {
+        "dark": "#161B22",
+        "light": "#FCFCFD"
+      },
+      "widgetCornerRadius": 12,
+      "widgetHeaderAlignment": "LEFT",
+      "widgetMargin": 8,
+      "widgetPadding": 16,
+      "widgetShadow": 15
+    }
+  }
+}
