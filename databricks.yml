@@ -29,6 +29,13 @@ variables:
     description: Registered model version served by the churn endpoint (lab 04)
     default: "1"
 
+python:
+  venv_path: .venv
+  resources:
+    - "bundle_python.resources:load_resources"
+  mutators:
+    - "bundle_python.mutators:add_standard_tags"
+
 targets:
   # Interactive development: every deploy is private to you.
   dev:
