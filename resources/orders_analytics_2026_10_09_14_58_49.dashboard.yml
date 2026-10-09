@@ -1,0 +1,6 @@
+resources:
+  dashboards:
+    orders_analytics_2026_10_09_14_58_49:
+      display_name: "Orders Analytics 2026-10-09 14:58:49"
+      warehouse_id: 63bcb00a8741e80d
+      file_path: ../src/orders_analytics_2026_10_09_14_58_49.lvdash.json
